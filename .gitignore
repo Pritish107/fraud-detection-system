@@ -14,6 +14,7 @@ data/processed/*
 data/interim/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
+!data/processed/example_transactions.json
 !data/interim/.gitkeep
 
 # Model artifacts
