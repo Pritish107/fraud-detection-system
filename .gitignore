@@ -27,12 +27,6 @@ models/*.json
 kaggle.json
 .kaggle/
 
-# Reports (generated)
-reports/figures/*
-reports/eda/*
-!reports/figures/.gitkeep
-!reports/eda/.gitkeep
-
 # Env / secrets
 .env
 *.env
