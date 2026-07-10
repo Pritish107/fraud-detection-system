@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Data (too large / private for git)
+data/raw/*
+data/processed/*
+data/interim/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/interim/.gitkeep
+
+# Model artifacts
+models/*.pkl
+models/*.joblib
+models/*.txt
+models/*.json
+!models/.gitkeep
+
+# Kaggle credentials
+kaggle.json
+.kaggle/
+
+# Reports (generated)
+reports/figures/*
+reports/eda/*
+!reports/figures/.gitkeep
+!reports/eda/.gitkeep
+
+# Env / secrets
+.env
+*.env
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/settings.json
