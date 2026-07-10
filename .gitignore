@@ -17,12 +17,14 @@ data/interim/*
 !data/processed/example_transactions.json
 !data/interim/.gitkeep
 
-# Model artifacts
+# Model artifacts (main model + baseline are tracked — small enough for git and
+# needed so a fresh clone / CI can run the API, dashboard, and tests without
+# retraining or Kaggle credentials)
 models/*.pkl
-models/*.joblib
-models/*.txt
-models/*.json
 !models/.gitkeep
+!models/main_model.txt
+!models/main_model_meta.json
+!models/baseline_logreg.joblib
 
 # Kaggle credentials
 kaggle.json
