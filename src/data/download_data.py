@@ -12,7 +12,6 @@ Usage:
     .venv/Scripts/python.exe src/data/download_data.py
 """
 
-import subprocess
 import sys
 import zipfile
 from pathlib import Path
@@ -41,7 +40,7 @@ def main() -> None:
     RAW_DIR.mkdir(parents=True, exist_ok=True)
 
     try:
-        import kaggle  # noqa: F401  (import validates kaggle.json is configured)
+        from kaggle.api.kaggle_api_extended import KaggleApi
     except OSError as exc:
         sys.exit(
             "Kaggle API credentials not found or invalid.\n"
@@ -50,30 +49,19 @@ def main() -> None:
             f"Original error: {exc}"
         )
 
+    api = KaggleApi()
+    api.authenticate()
+
     print(f"Downloading competition data for '{COMPETITION}' ...")
-    result = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "kaggle",
-            "competitions",
-            "download",
-            "-c",
-            COMPETITION,
-            "-p",
-            str(RAW_DIR),
-        ],
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0:
+    try:
+        api.competition_download_files(COMPETITION, path=str(RAW_DIR), quiet=False)
+    except Exception as exc:  # kaggle raises generic ApiException on HTTP errors
         sys.exit(
             "Kaggle download failed. If this mentions 403 Forbidden, you likely "
             "haven't accepted the competition rules yet:\n"
             f"https://www.kaggle.com/c/{COMPETITION}/rules\n\n"
-            f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+            f"Original error: {exc}"
         )
-    print(result.stdout)
 
     zip_path = RAW_DIR / f"{COMPETITION}.zip"
     if zip_path.exists():
