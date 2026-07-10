@@ -65,7 +65,8 @@ def render_transaction_explorer() -> None:
     fe = load_explainer()
     examples = load_examples()
     if not examples:
-        st.warning("No example transactions found. Run `src/api/prepare_examples.py` first.")
+        st.warning("No example transactions found. Run "
+                   "`src/api/generate_synthetic_examples.py` first.")
         return
 
     labels = {

@@ -8,7 +8,12 @@ venv/
 .pytest_cache/
 .ipynb_checkpoints/
 
-# Data (too large / private for git)
+# Data (too large / private for git). data/processed/example_transactions.json is the
+# one exception — it's FABRICATED data (see src/api/generate_synthetic_examples.py),
+# safe to commit and used by the API/dashboard by default. Anything with real
+# transaction values (e.g. prepare_examples.py's *_real_LOCAL_ONLY.json output) must
+# stay gitignored — IEEE-CIS's competition rules restrict redistributing the dataset
+# outside the competition.
 data/raw/*
 data/processed/*
 data/interim/*
@@ -41,3 +46,8 @@ Thumbs.db
 
 # Claude Code harness state
 .claude/
+
+# Per-transaction SHAP figures — these bake real feature values from individual
+# IEEE-CIS transactions into the image itself (see the data/ note above for why).
+# Aggregate figures (shap_summary.png, shap_importance.png) are fine to commit.
+reports/figures/shap_local_*.png

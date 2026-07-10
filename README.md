@@ -26,7 +26,7 @@ card/device/identity metadata), 3.50% fraud rate.
 data/
   raw/               # original Kaggle CSVs (gitignored — see Setup)
   interim/           # scratch space (gitignored)
-  processed/         # example_transactions.json for the API/dashboard (tracked)
+  processed/         # example_transactions.json — FABRICATED demo data (tracked, see note below)
 src/
   data/              # download + memory-efficient loading (dtype downcasting)
   models/            # time-based split, baseline LR, main LightGBM + imbalance comparison
@@ -35,11 +35,25 @@ src/
   api/               # FastAPI service
   dashboard/         # Streamlit app
 tests/               # pytest — API (TestClient) and dashboard (Streamlit AppTest)
-models/              # trained model artifacts (gitignored, regenerate via scripts below)
+models/              # trained model artifacts — main_model.txt + meta + baseline are
+                     # tracked (small enough for git, needed so a fresh clone can run
+                     # the API/dashboard/tests without retraining)
 reports/
   eda/, models/, explainability/, drift/   # generated markdown reports
   figures/           # all generated plots
 ```
+
+**A note on why some example data is fabricated:** the API and dashboard need example
+transactions to demo against, but IEEE-CIS's Kaggle competition rules restrict
+redistributing the dataset outside the competition — so `data/processed/example_transactions.json`
+(tracked, ships with the repo) is **fabricated data** from `src/api/generate_synthetic_examples.py`:
+column values sampled from plausible ranges, then scored by the *real* trained model to
+pick genuinely high-confidence, low-confidence, and borderline examples. No real
+transaction's values are copied. If you have your own Kaggle access and want to explore
+against real held-out fraud cases locally, `src/api/prepare_examples.py` does that —
+its output is gitignored and must never be committed. Aggregate artifacts (EDA charts,
+the global SHAP summary, drift PSI tables) are unaffected by any of this since they're
+statistics over a sample, not individual records.
 
 ## Setup
 
@@ -69,16 +83,20 @@ Each stage writes its output (models, reports, figures) to disk, so later stages
 earlier ones to be re-run — but the first full pass needs to go in this order:
 
 ```powershell
-.venv\Scripts\python src\eda.py                                # EDA report
-.venv\Scripts\python src\models\train_baseline.py               # baseline Logistic Regression
-.venv\Scripts\python src\models\train_main.py                   # main LightGBM + imbalance comparison
-.venv\Scripts\python src\explainability\generate_shap_report.py # SHAP global + local explanations
-.venv\Scripts\python src\drift\generate_drift_report.py         # drift monitoring report
-.venv\Scripts\python src\api\prepare_examples.py                # example transactions for API/dashboard
+.venv\Scripts\python src\eda.py                                  # EDA report
+.venv\Scripts\python src\models\train_baseline.py                 # baseline Logistic Regression
+.venv\Scripts\python src\models\train_main.py                     # main LightGBM + imbalance comparison
+.venv\Scripts\python src\explainability\generate_shap_report.py   # SHAP global explanations
+.venv\Scripts\python src\drift\generate_drift_report.py           # drift monitoring report
+.venv\Scripts\python src\api\generate_synthetic_examples.py       # fabricated demo examples for API/dashboard
 
-.venv\Scripts\python -m uvicorn src.api.main:app --reload --port 8000   # API at localhost:8000/docs
-.venv\Scripts\python -m streamlit run src\dashboard\app.py               # dashboard at localhost:8501
+.venv\Scripts\python -m uvicorn src.api.main:app --reload --port 8000    # API at localhost:8000/docs
+.venv\Scripts\python -m streamlit run src\dashboard\app.py                # dashboard at localhost:8501
 ```
+
+The trained model artifacts and `example_transactions.json` are already committed, so if
+you just cloned the repo you can skip straight to the last two commands — no Kaggle
+account, no retraining, no download needed.
 
 Run tests with `.venv\Scripts\python -m pytest tests/`.
 
@@ -113,11 +131,14 @@ a false alarm) — moving from precision 0.559/recall 0.458 at the default 0.5 c
 
 **Explainability** ([report](reports/explainability/shap_report.md)) — SHAP `TreeExplainer` on
 the LightGBM model. Global importance is dominated by the anonymized `V*`/`C*` engineered
-features, `TransactionAmt`, and card identifiers. The report includes local waterfall
-explanations for a confidently caught fraud, a missed fraud, and a false alarm — not just the
-aggregate view — matching the "human-readable justification per flagged transaction" requirement.
-The `FraudExplainer` class (`src/explainability/explainer.py`) is shared by the report generator,
-the API, and the dashboard, so explanations are computed identically everywhere.
+features, `TransactionAmt`, and card identifiers. The pipeline also generates local waterfall
+explanations for a confidently caught fraud, a missed fraud, and a false alarm on the *real*
+held-out test set — matching the "human-readable justification per flagged transaction"
+requirement — but those specific examples are local-only (see the data note above, real
+transactions can't be redistributed). `POST /predict` returns the same kind of explanation live
+for any transaction you send it, including the fabricated examples that ship with the repo. The
+`FraudExplainer` class (`src/explainability/explainer.py`) is shared by the report generator, the
+API, and the dashboard, so explanations are computed identically everywhere.
 
 **Drift monitoring** ([report](reports/drift/drift_report.md)) — custom PSI/KS implementation
 (`src/drift/psi_ks.py`) rather than the `evidently` library, for transparent, version-stable
@@ -148,6 +169,14 @@ recommendation, feature drift table, performance-over-time and prediction-drift 
 
 ## Limitations
 
+- **The competition dataset can't be redistributed, so demo examples are fabricated.**
+  IEEE-CIS's competition rules restrict sharing the data outside the competition, so the
+  example transactions shipped in the repo (`data/processed/example_transactions.json`)
+  and their SHAP waterfall images are generated from plausible-but-fake values, not real
+  transactions — see the Project structure note above. The real held-out test set (with
+  its real fraud cases) is only ever used locally, gated behind the person running it
+  having their own Kaggle access, and its outputs are gitignored so they can't
+  accidentally get committed.
 - **Anonymized features limit regulatory explainability.** SHAP tells you `V257` was the top
   driver, but Kaggle doesn't disclose what `V257` means — a real production system needs
   interpretable feature names for compliance-facing explanations, not just statistical attribution.

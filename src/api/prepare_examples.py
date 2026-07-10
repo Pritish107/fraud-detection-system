@@ -1,7 +1,11 @@
-"""Precompute a handful of example transactions for the API's /examples endpoints and
-the Streamlit dashboard, so neither depends on the full ~1.3GB raw dataset being present
-at deploy time. Picks a mix of confident frauds, missed frauds, false alarms, and
-ordinary non-fraud transactions from the held-out test split.
+"""Precompute a handful of REAL example transactions (from the actual held-out test
+split) for local exploration of the API/dashboard against real fraud cases.
+
+*** LOCAL USE ONLY — DO NOT COMMIT THIS SCRIPT'S OUTPUT. ***
+IEEE-CIS's Kaggle competition rules restrict redistributing the dataset outside the
+competition, so its output is written to a path .gitignore excludes by pattern (not
+example_transactions.json — see generate_synthetic_examples.py for the fabricated data
+that actually ships in the repo and backs the API/dashboard by default).
 
 Usage:
     .venv/Scripts/python.exe src/api/prepare_examples.py
@@ -19,7 +23,7 @@ from explainability.explainer import FraudExplainer  # noqa: E402
 from models.split import time_based_split  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT_PATH = ROOT / "data" / "processed" / "example_transactions.json"
+OUT_PATH = ROOT / "data" / "processed" / "example_transactions_real_LOCAL_ONLY.json"
 
 
 def row_to_json_safe(row) -> dict:

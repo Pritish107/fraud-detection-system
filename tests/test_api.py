@@ -32,7 +32,7 @@ def test_examples_list(client):
 
 def test_predict_known_fraud_example(client):
     examples = client.get("/examples").json()
-    fraud_example = next(e for e in examples if e["category"] == "confident_fraud")
+    fraud_example = next(e for e in examples if e["category"] == "high_risk_synthetic")
     detail = client.get(f"/examples/{fraud_example['transaction_id']}").json()
 
     r = client.post("/predict", json={"transaction": detail["features"]})
