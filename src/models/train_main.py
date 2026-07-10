@@ -50,7 +50,7 @@ FIG_DIR = ROOT / "reports" / "figures"
 # dataviz skill categorical palette (references/palette.md), fixed order
 COLOR_1 = "#2a78d6"  # class weighting
 COLOR_2 = "#eda100"  # SMOTE
-COLOR_3 = "#1baf7a"  # threshold tuning (same model as 1, different cutoff — kept distinct for the curve legend)
+COLOR_3 = "#1baf7a"  # threshold tuning (same model as 1, distinct only for the curve legend)
 COLOR_GRID = "#e1e0d9"
 
 LGB_PARAMS = dict(

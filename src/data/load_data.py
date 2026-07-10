@@ -19,7 +19,7 @@ def reduce_memory_usage(df: pd.DataFrame, verbose: bool = True) -> pd.DataFrame:
 
     for col in df.columns:
         col_dtype = df[col].dtype
-        if col_dtype == object:
+        if col_dtype == object:  # noqa: E721 -- standard pandas dtype-comparison idiom
             continue
 
         c_min, c_max = df[col].min(), df[col].max()

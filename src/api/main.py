@@ -20,8 +20,6 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from explainability.explainer import FraudExplainer  # noqa: E402
-
 from api.schemas import (  # noqa: E402
     ExampleDetail,
     ExampleSummary,
@@ -29,6 +27,7 @@ from api.schemas import (  # noqa: E402
     PredictionResponse,
     TransactionRequest,
 )
+from explainability.explainer import FraudExplainer  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 EXAMPLES_PATH = ROOT / "data" / "processed" / "example_transactions.json"

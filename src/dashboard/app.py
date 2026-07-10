@@ -90,7 +90,8 @@ def render_transaction_explorer() -> None:
 
     st.subheader("Top contributing features")
     feat_df = pd.DataFrame(result["top_features"])
-    feat_df["direction"] = feat_df["shap_value"].apply(lambda v: "toward fraud" if v >= 0 else "away from fraud")
+    feat_df["direction"] = feat_df["shap_value"].apply(
+        lambda v: "toward fraud" if v >= 0 else "away from fraud")
     feat_df["feature_value"] = feat_df["feature_value"].astype(str)
     feat_df = feat_df.sort_values("shap_value")
 

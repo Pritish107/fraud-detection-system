@@ -18,7 +18,7 @@ from sklearn.metrics import average_precision_score, fbeta_score, precision_scor
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from data.load_data import load_merged  # noqa: E402
-from drift.psi_ks import compute_drift_table, compute_psi_numeric  # noqa: E402
+from drift.psi_ks import compute_drift_table, compute_psi_numeric, psi_severity  # noqa: E402
 from explainability.explainer import FraudExplainer  # noqa: E402
 from models.split import time_based_split  # noqa: E402
 
@@ -143,6 +143,7 @@ def main() -> None:
     test_proba = fe.predict_proba(test)
     plot_prediction_drift(train_proba, test_proba)
     proba_psi = compute_psi_numeric(train_proba, test_proba)
+    proba_psi_severity = psi_severity(proba_psi)
 
     trigger_reasons = []
     if frac_significant > SIGNIFICANT_FEATURE_FRACTION_TRIGGER:
@@ -222,7 +223,7 @@ def main() -> None:
         "## Prediction distribution drift",
         "",
         f"PSI on the predicted fraud probability distribution (train vs. test): "
-        f"**{proba_psi:.3f}** ({('significant' if proba_psi > 0.2 else 'moderate' if proba_psi > 0.1 else 'none')}). "
+        f"**{proba_psi:.3f}** ({proba_psi_severity}). "
         "This is a label-free proxy — useful in production where ground-truth fraud "
         "labels arrive with a delay (chargebacks take time to materialize), so this "
         "signal is available well before performance-over-time can be computed.",
