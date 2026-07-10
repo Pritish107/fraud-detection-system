@@ -1,0 +1,14 @@
+{
+  "retrain_recommended": true,
+  "trigger_reasons": [
+    "out-of-sample PR-AUC dropped 35.5% relative to the first post-training window, above the 25% threshold"
+  ],
+  "n_features": 431,
+  "n_significant": 20,
+  "frac_significant": 0.04640371229698376,
+  "first_window_pr_auc": 0.7783972744127778,
+  "last_window_pr_auc": 0.5017496530468367,
+  "performance_relative_drop": 0.35540671898503734,
+  "prediction_distribution_psi": 0.004881044085340273,
+  "window_days": 3
+}

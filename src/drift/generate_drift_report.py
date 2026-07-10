@@ -7,6 +7,7 @@ Usage:
     .venv/Scripts/python.exe src/drift/generate_drift_report.py
 """
 
+import json
 import sys
 from pathlib import Path
 
@@ -243,6 +244,21 @@ def main() -> None:
     ]
     (REPORT_DIR / "drift_report.md").write_text("\n".join(lines), encoding="utf-8")
     print(f"Report saved to {REPORT_DIR / 'drift_report.md'}")
+
+    summary = {
+        "retrain_recommended": retrain_recommended,
+        "trigger_reasons": trigger_reasons,
+        "n_features": int(len(drift_table)),
+        "n_significant": int(n_significant),
+        "frac_significant": float(frac_significant),
+        "first_window_pr_auc": float(first_pr_auc),
+        "last_window_pr_auc": float(last_pr_auc),
+        "performance_relative_drop": float(relative_drop),
+        "prediction_distribution_psi": float(proba_psi),
+        "window_days": WINDOW_DAYS,
+    }
+    (REPORT_DIR / "drift_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    print(f"Summary saved to {REPORT_DIR / 'drift_summary.json'}")
 
 
 if __name__ == "__main__":

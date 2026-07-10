@@ -32,9 +32,12 @@ class FraudExplainer:
 
     def _prepare(self, df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
+        for c in self.numeric_features:
+            if c in df.columns:
+                df[c] = pd.to_numeric(df[c], errors="coerce")
         for c in self.categorical_features:
             if c in df.columns:
-                df[c] = df[c].astype("category")
+                df[c] = df[c].astype("object").where(df[c].notna(), None).astype("category")
         return df[self.feature_cols]
 
     def predict_proba(self, df: pd.DataFrame) -> "pd.Series[float]":

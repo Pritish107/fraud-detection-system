@@ -55,13 +55,10 @@ app = FastAPI(
 
 
 def build_dataframe(payload: Dict, fe: FraudExplainer) -> pd.DataFrame:
+    """Dtype coercion (numeric parsing, categorical NaN handling) happens centrally in
+    FraudExplainer._prepare — this just aligns the payload to the expected columns."""
     row = {col: payload.get(col, None) for col in fe.feature_cols}
-    df = pd.DataFrame([row])
-    for col in fe.numeric_features:
-        df[col] = pd.to_numeric(df[col], errors="coerce")
-    for col in fe.categorical_features:
-        df[col] = df[col].where(pd.notna(df[col]), None).astype("object")
-    return df
+    return pd.DataFrame([row])
 
 
 @app.get("/health", response_model=HealthResponse)
