@@ -1,5 +1,13 @@
 # Main Model — LightGBM Imbalance-Handling Comparison
 
+**Note:** the numbers below use fixed, hand-picked hyperparameters, deliberately kept
+identical across all three techniques so this comparison isolates the imbalance-handling
+technique's effect in isolation. The model actually deployed (`models/main_model.txt`)
+has since been hyperparameter-tuned on top of the winning technique (class weighting) —
+see [hyperparameter_tuning.md](hyperparameter_tuning.md) for the current numbers. This
+report remains accurate as a comparison of *techniques*, just not of the final deployed
+model's absolute performance.
+
 Same LightGBM hyperparameters and time-based split across all three techniques (see [baseline_metrics.md](baseline_metrics.md) for the split methodology) — only the imbalance-handling technique differs, isolating its effect.
 
 ## Results (test set)

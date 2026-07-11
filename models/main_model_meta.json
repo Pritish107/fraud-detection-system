@@ -434,7 +434,17 @@
     "DeviceType",
     "DeviceInfo"
   ],
-  "threshold": 0.28258452678679574,
+  "threshold": 0.0027770350159768953,
   "scale_pos_weight": 27.434310083918007,
-  "best_iteration": 1716
+  "best_iteration": 1480,
+  "hyperparameters": {
+    "learning_rate": 0.1571421414203799,
+    "num_leaves": 160,
+    "feature_fraction": 0.5804692492205255,
+    "bagging_fraction": 0.932275184634352,
+    "bagging_freq": 3,
+    "min_child_samples": 9,
+    "lambda_l1": 1.9510480875853952e-05,
+    "lambda_l2": 0.00014928917818402836
+  }
 }

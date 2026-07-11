@@ -156,8 +156,19 @@ numeric/categorical dimensions blurs the boundary gradient-boosted trees already
 loss reweighting, and requires imputing away LightGBM's native missing-value handling to make
 interpolation possible. The final model uses class weighting, with the decision threshold tuned
 on validation to maximize F2 (recall weighted over precision, since missing fraud costs more than
-a false alarm) — moving from precision 0.559/recall 0.458 at the default 0.5 cutoff to precision
-0.372/recall 0.561 at the tuned threshold of 0.283.
+a false alarm).
+
+**Hyperparameter tuning** ([report](reports/models/hyperparameter_tuning.md)) — 30-trial Optuna
+search (TPE sampler) over learning rate, tree complexity, sampling fractions, and L1/L2
+regularization, optimizing validation PR-AUC on top of the class-weighting technique chosen
+above. The tuned model improved test PR-AUC from 0.5174 to **0.5619** (+8.6% relative) and test
+ROC-AUC from 0.8929 to 0.9008, so it replaced the hand-picked-defaults model as
+`models/main_model.txt`. The higher-capacity trees it found (`num_leaves=160` vs. the original
+63, plus a higher learning rate) shifted the model's probability calibration — the F2-optimal
+threshold moved from 0.283 to 0.0028, which looks alarming in isolation but checks out on
+inspection: at that threshold the tuned model gets precision 0.491/recall 0.567 while flagging a
+sensible 4.0% of transactions, actually a better precision/recall tradeoff than the untuned
+model achieved at its own optimal threshold.
 
 **Explainability** ([report](reports/explainability/shap_report.md)) — SHAP `TreeExplainer` on
 the LightGBM model. Global importance is dominated by the anonymized `V*`/`C*` engineered
@@ -172,9 +183,9 @@ API, and the dashboard, so explanations are computed identically everywhere.
 
 **Drift monitoring** ([report](reports/drift/drift_report.md)) — custom PSI/KS implementation
 (`src/drift/psi_ks.py`) rather than the `evidently` library, for transparent, version-stable
-computation. The most important finding: out-of-sample PR-AUC dropped **35.5%** across the
+computation. The most important finding: out-of-sample PR-AUC dropped **31.5%** across the
 val+test period, while only 4.6% of raw features showed significant PSI drift and the
-*predicted-probability* distribution barely moved (PSI 0.005). That gap matters — it means this
+*predicted-probability* distribution barely moved (PSI 0.019). That gap matters — it means this
 is **concept drift** (the relationship between features and the fraud label changed), not
 covariate shift, and a monitoring setup that only watches prediction distributions (the
 label-free signal, available immediately) would completely miss it. The retrain-trigger logic
@@ -195,7 +206,8 @@ recommendation, feature drift table, performance-over-time and prediction-drift 
 | Model | Test PR-AUC | Test ROC-AUC |
 |---|---|---|
 | Baseline (Logistic Regression) | 0.189 | 0.830 |
-| Main (LightGBM, class weighting + tuned threshold) | **0.517** | 0.893 |
+| Main (LightGBM, class weighting, hand-picked hyperparameters) | 0.517 | 0.893 |
+| Main (LightGBM, class weighting, Optuna-tuned hyperparameters) | **0.562** | **0.901** |
 
 ## Limitations
 

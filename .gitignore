@@ -51,3 +51,8 @@ Thumbs.db
 # IEEE-CIS transactions into the image itself (see the data/ note above for why).
 # Aggregate figures (shap_summary.png, shap_importance.png) are fine to commit.
 reports/figures/shap_local_*.png
+
+# Any file using the _LOCAL_ONLY naming convention (real per-transaction data that must
+# never be committed — see prepare_examples.py, generate_shap_report.py) is excluded
+# everywhere in the repo, not just in data/, as a defense-in-depth backstop.
+**/*_LOCAL_ONLY.*

@@ -33,13 +33,14 @@ COLOR_WARNING = "#eda100"
 COLOR_CRITICAL = "#d03b3b"
 COLOR_MUTED = "#898781"
 
-# Headline results from reports/models/{baseline_metrics,main_model_comparison}.md and
-# reports/eda/eda_report.md — the source of truth for these numbers is the pipeline
-# that produced those reports; update here if the model is retrained.
+# Headline results from reports/models/{baseline_metrics,main_model_comparison,
+# hyperparameter_tuning}.md and reports/eda/eda_report.md — the source of truth for
+# these numbers is the pipeline that produced those reports; update here if the model
+# is retrained. Main model is the Optuna-tuned LightGBM (hyperparameter_tuning.md).
 FRAUD_RATE = 0.0350
 BASELINE_PR_AUC = 0.189
-MAIN_PR_AUC = 0.517
-MAIN_ROC_AUC = 0.893
+MAIN_PR_AUC = 0.5619
+MAIN_ROC_AUC = 0.9008
 
 CATEGORY_ICONS = {
     "high_risk_synthetic": "\U0001F534",

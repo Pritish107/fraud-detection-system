@@ -14,14 +14,6 @@ The dominant drivers are the anonymized `V*`/`C*`/`D*` engineered features (cons
 
 ## Local explanations
 
-The full pipeline (`src/explainability/generate_shap_report.py`) also generates waterfall explanations for three representative transactions — a confidently caught fraud, a missed fraud (false negative), and a false alarm (false positive) — each showing the top SHAP-contributing features with their real values, exactly like the JSON response `POST /predict` returns for a live transaction.
+The full pipeline (`src/explainability/generate_shap_report.py`) also generates waterfall explanations for three representative real transactions — a confidently caught fraud, a missed fraud, and a false alarm — showing the top SHAP-contributing features with their real values, exactly like the JSON response `POST /predict` returns for a live transaction.
 
-**Those per-transaction examples (and the `shap_local_*.png` waterfall images) are intentionally excluded from this repo.** They contain real per-transaction feature values from the IEEE-CIS Kaggle competition dataset, which restricts redistributing competition data outside the competition — the plots above are safe to share because they're aggregate statistics over a sample, not individual records, but a waterfall plot for one specific transaction is not.
-
-If you have your own Kaggle access to the dataset (see the main README's Setup section), regenerate them locally:
-
-```powershell
-.venv\Scripts\python src\explainability\generate_shap_report.py
-```
-
-This writes the local waterfall figures to `reports/figures/` (gitignored) and the full report — including real per-transaction values — to this file locally. The same explanation logic (`src/explainability/explainer.py`) backs the `POST /predict` endpoint, so `reports/models/main_model_comparison.md`'s precision/recall tradeoff and this report's global feature importance are the two pieces of context that travel with the repo; the specific example transactions are a local-only artifact.
+**Those per-transaction examples are intentionally excluded from this repo.** They contain real per-transaction feature values from the IEEE-CIS Kaggle competition dataset, which restricts redistributing competition data outside the competition. This report's charts above are safe to share because they're aggregate statistics over a sample, not individual records — a waterfall plot for one specific transaction is not. Regenerate them locally (with your own Kaggle access, see the main README's Setup section) via the command above; the local-only output goes to `reports/explainability/shap_local_examples_LOCAL_ONLY.md` and `reports/figures/shap_local_*.png`, both gitignored.

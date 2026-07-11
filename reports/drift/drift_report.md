@@ -6,7 +6,7 @@ Compares the training window (reference) against the held-out test window (curre
 
 **RETRAIN RECOMMENDED**
 
-- out-of-sample PR-AUC dropped 35.5% relative to the first post-training window, above the 25% threshold
+- out-of-sample PR-AUC dropped 31.5% relative to the first post-training window, above the 25% threshold
 
 ## Feature distribution drift
 
@@ -35,12 +35,12 @@ PR-AUC in 3-day windows across the validation+test period (never seen during tra
 
 ![Performance over time](../figures/drift_performance_over_time.png)
 
-PR-AUC moved from 0.778 in the first post-training window to 0.502 in the last (35.5% relative change). This directly reflects the fraud-rate drift observed in the EDA report — fraud patterns are non-stationary, so performance monitoring (not just a one-time validation score) is necessary in production.
+PR-AUC moved from 0.813 in the first post-training window to 0.557 in the last (31.5% relative change). This directly reflects the fraud-rate drift observed in the EDA report — fraud patterns are non-stationary, so performance monitoring (not just a one-time validation score) is necessary in production.
 
 ## Prediction distribution drift
 
-PSI on the predicted fraud probability distribution (train vs. test): **0.005** (none). This is a label-free proxy — useful in production where ground-truth fraud labels arrive with a delay (chargebacks take time to materialize), so this signal is available well before performance-over-time can be computed.
+PSI on the predicted fraud probability distribution (train vs. test): **0.019** (none). This is a label-free proxy — useful in production where ground-truth fraud labels arrive with a delay (chargebacks take time to materialize), so this signal is available well before performance-over-time can be computed.
 
 ![Prediction distribution drift](../figures/drift_prediction_distribution.png)
 
-**This is the report's most important finding.** The prediction-distribution PSI (0.005) shows essentially no drift, while the out-of-sample PR-AUC dropped 35.5%. A monitoring setup that only watched prediction distributions (the label-free signal, available immediately) would have completely missed this degradation — because what changed is the *relationship* between features and the fraud label (concept drift), not the input distribution the model scores. That's consistent with only 4.6% of raw features showing significant PSI drift too. The practical implication: for this problem, label-free monitoring alone is not sufficient, and a production system needs a fast-as-possible feedback loop on delayed ground truth (chargebacks) rather than relying on distribution-drift proxies alone.
+**This is the report's most important finding.** The prediction-distribution PSI (0.019) shows essentially no drift, while the out-of-sample PR-AUC dropped 31.5%. A monitoring setup that only watched prediction distributions (the label-free signal, available immediately) would have completely missed this degradation — because what changed is the *relationship* between features and the fraud label (concept drift), not the input distribution the model scores. That's consistent with only 4.6% of raw features showing significant PSI drift too. The practical implication: for this problem, label-free monitoring alone is not sufficient, and a production system needs a fast-as-possible feedback loop on delayed ground truth (chargebacks) rather than relying on distribution-drift proxies alone.
