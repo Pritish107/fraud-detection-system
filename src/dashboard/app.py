@@ -110,12 +110,14 @@ def inject_css() -> None:
 
 
 def metric_card(label: str, value: str, delta: str = "", delta_color: str = "") -> str:
+    # Built as a single line deliberately: st.markdown runs its input through a
+    # Markdown pass before allowing raw HTML through, and a multi-line f-string here
+    # left an indented blank line before the closing </div> when delta was empty —
+    # CommonMark reads 4-space indentation as a code block, so the closing tag
+    # rendered as literal text instead of HTML. One line sidesteps that entirely.
     delta_html = f'<div class="delta" style="color:{delta_color}">{delta}</div>' if delta else ""
-    return f"""<div class="metric-card">
-        <div class="label">{label}</div>
-        <div class="value">{value}</div>
-        {delta_html}
-    </div>"""
+    return (f'<div class="metric-card"><div class="label">{label}</div>'
+            f'<div class="value">{value}</div>{delta_html}</div>')
 
 
 def badge(text: str, kind: str) -> None:
@@ -173,8 +175,14 @@ def make_gauge(proba: float, threshold: float) -> go.Figure:
             },
         },
     ))
-    fig.update_layout(height=240, margin=dict(l=25, r=25, t=35, b=10),
-                       paper_bgcolor="rgba(0,0,0,0)", font={"family": "system-ui, sans-serif"})
+    # Plotly can't inherit the page's CSS theme (it renders to its own canvas/SVG), so
+    # transparent backgrounds alone don't guarantee readable text — font/grid colors
+    # are set explicitly here for the dark theme this dashboard is deployed with.
+    fig.update_layout(
+        height=240, margin=dict(l=25, r=25, t=35, b=10),
+        paper_bgcolor="rgba(0,0,0,0)",
+        font={"family": "system-ui, sans-serif", "color": "#e8e8e6"},
+    )
     return fig
 
 
@@ -183,6 +191,8 @@ def make_shap_chart(feat_df: pd.DataFrame) -> go.Figure:
     labels = [f"{f} = {v}" for f, v in zip(feat_df["feature"], feat_df["feature_value"])]
     fig = go.Figure(go.Bar(
         x=feat_df["shap_value"], y=labels, orientation="h", marker_color=colors,
+        text=[f"{v:.3f}" for v in feat_df["shap_value"]], textposition="outside",
+        textfont={"color": "#e8e8e6", "size": 11},
         hovertemplate="%{y}<br>SHAP: %{x:.3f}<extra></extra>",
     ))
     fig.update_layout(
@@ -190,22 +200,22 @@ def make_shap_chart(feat_df: pd.DataFrame) -> go.Figure:
         margin=dict(l=10, r=20, t=10, b=40),
         xaxis_title="SHAP value (log-odds impact on prediction)",
         showlegend=False, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
-        font={"family": "system-ui, sans-serif", "size": 12},
-        xaxis=dict(gridcolor="rgba(137,135,129,0.2)", zerolinecolor="rgba(137,135,129,0.5)"),
-        yaxis=dict(autorange="reversed"),
+        font={"family": "system-ui, sans-serif", "size": 12, "color": "#e8e8e6"},
+        xaxis=dict(gridcolor="rgba(232,232,230,0.18)", zerolinecolor="rgba(232,232,230,0.5)",
+                   tickfont={"color": "#c3c2b7"}),
+        yaxis=dict(autorange="reversed", tickfont={"color": "#e8e8e6"}),
     )
     return fig
 
 
 def render_overview() -> None:
-    st.markdown("""
-    <div class="hero">
-        <h1>Real-Time Fraud Detection</h1>
-        <p>LightGBM classifier tuned for a 3.50% fraud prevalence, explained per-prediction
-        with SHAP, and monitored for concept drift. Explore individual transactions or check
-        the model's current drift status using the sidebar.</p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        '<div class="hero"><h1>Real-Time Fraud Detection</h1>'
+        "<p>LightGBM classifier tuned for a 3.50% fraud prevalence, explained "
+        "per-prediction with SHAP, and monitored for concept drift. Explore individual "
+        "transactions or check the model's current drift status using the sidebar.</p>"
+        "</div>",
+        unsafe_allow_html=True)
 
     cols = st.columns(4)
     cards = [
@@ -412,14 +422,14 @@ def main() -> None:
 
     try:
         fe = load_explainer()
-        st.sidebar.markdown(f"""
-        <div class="sidebar-footer">
-            <b>Model:</b> LightGBM<br>
-            <b>Threshold:</b> {fe.threshold:.3f}<br>
-            <b>Best iteration:</b> {fe.meta['best_iteration']}<br>
-            <b>Features:</b> {len(fe.feature_cols)}
-        </div>
-        """, unsafe_allow_html=True)
+        st.sidebar.markdown(
+            '<div class="sidebar-footer">'
+            "<b>Model:</b> LightGBM<br>"
+            f"<b>Threshold:</b> {fe.threshold:.3f}<br>"
+            f"<b>Best iteration:</b> {fe.meta['best_iteration']}<br>"
+            f"<b>Features:</b> {len(fe.feature_cols)}"
+            "</div>",
+            unsafe_allow_html=True)
     except Exception:
         pass
 
