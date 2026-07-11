@@ -41,3 +41,4 @@ def test_drift_monitoring_renders_without_exceptions():
     at.sidebar.radio[0].set_value("Drift Monitoring").run()
     assert not list(at.exception)
     assert len(at.main.tabs) == 3
+    assert len(at.main.get("plotly_chart")) == 1  # feature-drift PSI chart

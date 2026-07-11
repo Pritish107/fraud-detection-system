@@ -6,6 +6,7 @@ Usage:
     .venv/Scripts/python.exe -m streamlit run src/dashboard/app.py
 """
 
+import base64
 import json
 import sys
 from pathlib import Path
@@ -104,9 +105,35 @@ def inject_css() -> None:
         font-size: 0.78rem; opacity: 0.6; padding: 10px 4px; line-height: 1.5;
     }
 
+    /* Static report figures (matplotlib, light-surface #fcfcfb) are framed as an
+       intentional "paper" card rather than left to clash raw against the dark app
+       background. */
+    .report-figure-card {
+        background: #fcfcfb; border-radius: 12px; padding: 16px;
+        border: 1px solid rgba(137,135,129,0.25);
+    }
+    .report-figure-card img { width: 100%; display: block; border-radius: 6px; }
+    .report-figure-caption {
+        font-size: 0.76rem; opacity: 0.55; margin-top: 6px; padding: 0 2px;
+    }
+
     section[data-testid="stSidebar"] .block-container { padding-top: 1.5rem; }
     </style>
     """, unsafe_allow_html=True)
+
+
+def report_figure(path: Path, caption: str = "") -> None:
+    """Embed a static report PNG (light surface, built for the standalone markdown
+    reports) as a single self-contained HTML block, framed to read as an intentional
+    inset rather than a dark-mode rendering bug."""
+    if not path.exists():
+        return
+    b64 = base64.b64encode(path.read_bytes()).decode("ascii")
+    caption_html = f'<div class="report-figure-caption">{caption}</div>' if caption else ""
+    st.markdown(
+        f'<div class="report-figure-card"><img src="data:image/png;base64,{b64}">'
+        f'{caption_html}</div>',
+        unsafe_allow_html=True)
 
 
 def metric_card(label: str, value: str, delta: str = "", delta_color: str = "") -> str:
@@ -204,6 +231,30 @@ def make_shap_chart(feat_df: pd.DataFrame) -> go.Figure:
         xaxis=dict(gridcolor="rgba(232,232,230,0.18)", zerolinecolor="rgba(232,232,230,0.5)",
                    tickfont={"color": "#c3c2b7"}),
         yaxis=dict(autorange="reversed", tickfont={"color": "#e8e8e6"}),
+    )
+    return fig
+
+
+def make_drift_chart(drift_table: pd.DataFrame, top_n: int = 20) -> go.Figure:
+    top = drift_table.head(top_n).iloc[::-1]
+    severity_color = {"significant": COLOR_FRAUD, "moderate": COLOR_WARNING, "none": COLOR_NONFRAUD}
+    colors = [severity_color.get(s, COLOR_MUTED) for s in top["severity"]]
+    fig = go.Figure(go.Bar(
+        x=top["psi"], y=top["feature"], orientation="h", marker_color=colors,
+        text=[f"{v:.2f}" for v in top["psi"]], textposition="outside",
+        textfont={"color": "#e8e8e6", "size": 11},
+        hovertemplate="%{y}<br>PSI: %{x:.3f}<extra></extra>",
+    ))
+    fig.add_vline(x=0.1, line_dash="dash", line_color="rgba(232,232,230,0.4)", line_width=1)
+    fig.add_vline(x=0.2, line_dash="dash", line_color="rgba(232,232,230,0.4)", line_width=1)
+    fig.update_layout(
+        height=max(320, 28 * len(top)),
+        margin=dict(l=10, r=30, t=10, b=40),
+        xaxis_title="PSI (train vs. test) — dashed lines at 0.1 (moderate) and 0.2 (significant)",
+        showlegend=False, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+        font={"family": "system-ui, sans-serif", "size": 12, "color": "#e8e8e6"},
+        xaxis=dict(gridcolor="rgba(232,232,230,0.18)", tickfont={"color": "#c3c2b7"}),
+        yaxis=dict(tickfont={"color": "#e8e8e6"}),
     )
     return fig
 
@@ -382,23 +433,21 @@ def render_drift_monitoring() -> None:
     tab1, tab2, tab3 = st.tabs(["Feature Drift", "Performance Over Time", "Prediction Drift"])
 
     with tab1:
-        fig_path = FIG_DIR / "drift_feature_psi.png"
-        if fig_path.exists():
-            st.image(str(fig_path))
         drift_table = load_feature_drift()
         if not drift_table.empty:
+            st.plotly_chart(make_drift_chart(drift_table), use_container_width=True,
+                             config={"displayModeBar": False})
             with st.expander("Full feature drift table"):
                 st.dataframe(drift_table, hide_index=True, use_container_width=True)
 
     with tab2:
-        fig_path = FIG_DIR / "drift_performance_over_time.png"
-        if fig_path.exists():
-            st.image(str(fig_path))
+        report_figure(FIG_DIR / "drift_performance_over_time.png",
+                      "Out-of-sample PR-AUC in 3-day windows across validation+test — "
+                      "never seen during training.")
 
     with tab3:
-        fig_path = FIG_DIR / "drift_prediction_distribution.png"
-        if fig_path.exists():
-            st.image(str(fig_path))
+        report_figure(FIG_DIR / "drift_prediction_distribution.png",
+                      "Predicted fraud-probability distribution, train vs. test.")
         st.info(
             "Prediction-distribution PSI barely moved even though out-of-sample "
             "performance dropped substantially — this is concept drift (the "
