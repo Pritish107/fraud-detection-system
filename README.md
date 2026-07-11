@@ -57,10 +57,13 @@ redistributing the dataset outside the competition — so `data/processed/exampl
 column values sampled from plausible ranges, then scored by the *real* trained model to
 pick genuinely high-confidence, low-confidence, and borderline examples. No real
 transaction's values are copied. If you have your own Kaggle access and want to explore
-against real held-out fraud cases locally, `src/api/prepare_examples.py` does that —
-its output is gitignored and must never be committed. Aggregate artifacts (EDA charts,
-the global SHAP summary, drift PSI tables) are unaffected by any of this since they're
-statistics over a sample, not individual records.
+against real held-out fraud cases (real Vesta Corporation e-commerce transactions, with
+real historical fraud outcomes) locally, `src/api/prepare_examples.py` does that — its
+output is gitignored and must never be committed. Once generated, the dashboard's
+Transaction Explorer automatically shows a toggle to switch between the fabricated demo
+data and the real local-only examples. Aggregate artifacts (EDA charts, the global SHAP
+summary, drift PSI tables) are unaffected by any of this since they're statistics over a
+sample, not individual records.
 
 ## Setup
 
