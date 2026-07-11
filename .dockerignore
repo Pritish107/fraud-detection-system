@@ -1,0 +1,14 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.git/
+.github/
+.claude/
+.vscode/
+data/raw/
+data/interim/
+notebooks/
+.ipynb_checkpoints/
+*.log

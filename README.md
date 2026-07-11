@@ -41,6 +41,9 @@ models/              # trained model artifacts — main_model.txt + meta + basel
 reports/
   eda/, models/, explainability/, drift/   # generated markdown reports
   figures/           # all generated plots
+Dockerfile.api        # FastAPI service image
+Dockerfile.dashboard  # Streamlit dashboard image
+docker-compose.yml     # runs both together
 ```
 
 **A note on why some example data is fabricated:** the API and dashboard need example
@@ -99,6 +102,23 @@ you just cloned the repo you can skip straight to the last two commands — no K
 account, no retraining, no download needed.
 
 Run tests with `.venv\Scripts\python -m pytest tests/`.
+
+## Running with Docker
+
+No Python setup needed — the images bundle the trained model and the fabricated demo
+data, so this works straight after cloning:
+
+```powershell
+docker compose up -d
+```
+
+API docs at http://localhost:8000/docs, dashboard at http://localhost:8501. Stop with
+`docker compose down`. Each service also builds standalone if you only want one:
+
+```powershell
+docker build -f Dockerfile.api -t fraud-api .
+docker run -p 8000:8000 fraud-api
+```
 
 ## Methodology and key decisions
 
