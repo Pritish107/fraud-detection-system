@@ -5,6 +5,10 @@ tuned for precision/recall tradeoffs under severe class imbalance, SHAP-based ex
 every prediction, a drift-monitoring module that tracks when the model needs retraining, and a
 FastAPI service (plus a Streamlit dashboard) to serve it all.
 
+**Live demo:** [API docs](https://fraud-detection-api-43qh.onrender.com/docs) ·
+[Dashboard](https://fraud-detection-dashboard-rewk.onrender.com)
+(free-tier hosting — the first request after idle time takes 30-60s to wake up, then it's fast)
+
 ## Problem
 
 Fraudulent transactions are a small fraction of total volume (3.50% in this dataset), so a
@@ -119,6 +123,9 @@ API docs at http://localhost:8000/docs, dashboard at http://localhost:8501. Stop
 docker build -f Dockerfile.api -t fraud-api .
 docker run -p 8000:8000 fraud-api
 ```
+
+`render.yaml` deploys both as Docker-runtime web services on [Render](https://render.com)'s
+free tier — that's what backs the live demo linked at the top of this README.
 
 ## Methodology and key decisions
 
