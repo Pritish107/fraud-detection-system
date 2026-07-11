@@ -28,7 +28,19 @@ class FraudExplainer:
         self.feature_cols: List[str] = self.numeric_features + self.categorical_features
         self.threshold: float = self.meta["threshold"]
 
-        self._explainer = shap.TreeExplainer(self.booster)
+        # Built lazily, not here: shap.TreeExplainer duplicates the tree structure into
+        # its own internal representation, which roughly doubles this object's memory
+        # footprint. Endpoints like /health and /examples never touch SHAP, so paying
+        # that cost at construction time (i.e. at every process startup) is wasted
+        # memory on a RAM-constrained deployment — only build it the first time a caller
+        # actually needs SHAP values.
+        self.__dict__["_explainer"] = None
+
+    @property
+    def _explainer(self):
+        if self.__dict__["_explainer"] is None:
+            self.__dict__["_explainer"] = shap.TreeExplainer(self.booster)
+        return self.__dict__["_explainer"]
 
     def _prepare(self, df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
