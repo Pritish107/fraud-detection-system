@@ -1,7 +1,22 @@
 """SHAP-based explanations for the main LightGBM fraud model.
 
-Used both by the EDA/report generation script (global + example local explanations)
-and by the FastAPI service (per-request local explanation of "why was this flagged").
+Used both by the offline report generation script (global summary/beeswarm plots, via
+`shap_values()`) and by the FastAPI service (per-request local explanation of "why was
+this flagged", via `explain_row()`).
+
+These two paths deliberately use different SHAP computation methods. `explain_row()` —
+the hot path, called on every live /predict request — uses LightGBM's own native
+`pred_contrib=True` prediction mode, which implements the identical TreeSHAP algorithm
+the `shap` library uses for tree models (verified bit-for-bit identical output) but
+computes it inside LightGBM's C++ booster with no extra Python object. `shap_values()`
+— used only by the offline report generator, which needs actual shap.Explanation
+objects for its plotting functions — still uses shap.TreeExplainer. This split matters
+in practice: importing `shap` transitively pulls in the full sklearn (~260 submodules)
+and matplotlib (~90 submodules) packages, which was the dominant cause of a real
+out-of-memory crash on Render's free tier (512MB) once the model grew after
+hyperparameter tuning. Because the import is lazy (inside `_explainer`), the API
+process — which only ever calls `explain_row()`/`predict_proba()` — never imports
+`shap` (or sklearn/matplotlib) at all.
 """
 
 import json
@@ -10,7 +25,6 @@ from typing import List, Optional
 
 import lightgbm as lgb
 import pandas as pd
-import shap
 
 ROOT = Path(__file__).resolve().parents[2]
 MODELS_DIR = ROOT / "models"
@@ -28,17 +42,14 @@ class FraudExplainer:
         self.feature_cols: List[str] = self.numeric_features + self.categorical_features
         self.threshold: float = self.meta["threshold"]
 
-        # Built lazily, not here: shap.TreeExplainer duplicates the tree structure into
-        # its own internal representation, which roughly doubles this object's memory
-        # footprint. Endpoints like /health and /examples never touch SHAP, so paying
-        # that cost at construction time (i.e. at every process startup) is wasted
-        # memory on a RAM-constrained deployment — only build it the first time a caller
-        # actually needs SHAP values.
         self.__dict__["_explainer"] = None
 
     @property
     def _explainer(self):
+        """shap.TreeExplainer, for the offline report path only — see module docstring
+        for why explain_row() (the live-serving path) deliberately doesn't use this."""
         if self.__dict__["_explainer"] is None:
+            import shap
             self.__dict__["_explainer"] = shap.TreeExplainer(self.booster)
         return self.__dict__["_explainer"]
 
@@ -57,15 +68,18 @@ class FraudExplainer:
         return pd.Series(self.booster.predict(X), index=df.index)
 
     def shap_values(self, df: pd.DataFrame):
+        """Full shap.Explanation-compatible values, for offline report plotting only."""
         X = self._prepare(df)
         return self._explainer.shap_values(X), X
 
     def explain_row(self, row: pd.DataFrame, top_n: int = 5) -> dict:
         """Explain a single-row DataFrame. Returns probability, decision, and the
-        top_n features driving the prediction (toward or away from fraud)."""
+        top_n features driving the prediction (toward or away from fraud). Uses
+        LightGBM's native pred_contrib — see module docstring — not the shap library."""
         X = self._prepare(row)
         proba = float(self.booster.predict(X)[0])
-        sv = self._explainer.shap_values(X)[0]
+        contrib = self.booster.predict(X, pred_contrib=True)[0]
+        sv = contrib[:-1]  # last column is the base/expected value, not a feature contribution
 
         contributions = sorted(
             zip(self.feature_cols, sv, X.iloc[0].tolist()),
