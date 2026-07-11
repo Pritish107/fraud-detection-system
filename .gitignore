@@ -44,7 +44,7 @@ kaggle.json
 Thumbs.db
 .vscode/settings.json
 
-# Claude Code harness state
+# Local tooling/editor state
 .claude/
 
 # Per-transaction SHAP figures — these bake real feature values from individual
